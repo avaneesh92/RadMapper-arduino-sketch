@@ -34,6 +34,7 @@
 #include <avr/sleep.h>
 
 int sendBackDelay = 100;
+int speedupRampDelay = 3;
 // Global variables
 int MOTOR_R_P = 5;
 int MOTOR_R_N = 4;
@@ -58,16 +59,23 @@ bool err = false;
 //Motor functions
 void moveForward(int sp){
   digitalWrite(MOTOR_R_N,LOW);
-  analogWrite(MOTOR_R_P,sp);
   digitalWrite(MOTOR_L_N,LOW);
-  analogWrite(MOTOR_L_P,sp); 
+  //Apply Ramp for speedup
+  for(int i=0;i <= sp; i++){
+    analogWrite(MOTOR_R_P,i);
+    analogWrite(MOTOR_L_P,i);
+    delay(speedupRampDelay);
+  }
 }
 void moveBackward(int sp){
   int spInt = 255 - sp;
   digitalWrite(MOTOR_R_N,HIGH);
-  analogWrite(MOTOR_R_P,spInt);
   digitalWrite(MOTOR_L_N,HIGH);
-  analogWrite(MOTOR_L_P,spInt); 
+  for(int i=255; i >= spInt; i--){
+    analogWrite(MOTOR_R_P,i);
+    analogWrite(MOTOR_L_P,i);
+    delay(speedupRampDelay);
+  }   
 }
 void turnRight(int sp){
   int spInt = 255 - sp;
@@ -163,7 +171,7 @@ void processCmd(void){
 bool handleTimeout(){
   uint16_t now = millis();
   if(timeout != 0){//If timeout is zero keep the command running
-    if(now > timeout){
+    if(now > (timeout)){
       stopMotors();
       return false;
     } 
